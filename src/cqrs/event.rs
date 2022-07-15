@@ -29,34 +29,48 @@ pub struct Event {
 
 impl Event {
   pub fn new(metadata: HashMap<String, String>, deltas: HashMap<String, String>, aggregate_type: String) -> Event {
-    // Generates necessary values
-    let utc = Utc::now().to_string();
-    let guid = GUID::rand().to_string();
+    // timestamp as UTC to string
+    let timestamp = Utc::now().to_string();
+    // aggregate_id as a GUID
+    let aggregate_id = GUID::rand().to_string();
     let aggregate_version = 1;
     let event_name = "new";
 
-    let event = new_event(guid, aggregate_version, event_name, utc, metadata, deltas, aggregate_type);
+    let event = new_event(&aggregate_id, aggregate_version, event_name, timestamp, &metadata, deltas, &aggregate_type);
+
+    event
+  }
+
+  /// 'Update' is a little misleading name, since a completely new event is generated.
+  pub fn update(&self, changes: HashMap<String, String>, metadata: HashMap<String, String>, event_name: &str) -> Event {
+    let timestamp = Utc::now().to_string();
+    let aggregate_id = &self.aggregate_id;
+    let aggregate_version = &self.aggregate_version + 1;
+    let metadata = metadata;
+    let deltas = changes;
+    let aggregate_type = &self.aggregate_type;
+    let event = new_event(aggregate_id, aggregate_version, event_name, timestamp, &metadata, deltas, aggregate_type);
 
     event
   }
 }
 
 /// Constructs the event
-fn new_event(aggregate_id: String,
+fn new_event(aggregate_id: &String,
   aggregate_version: u32,
   event_name: &str,
   timestamp: String, //DateTime<Utc>,
-  metadata: HashMap<String, String>,
+  metadata: &HashMap<String, String>,
   deltas: HashMap<String, String>,
-  aggregate_type: String) -> Event {
+  aggregate_type: &String) -> Event {
     Event{
-      aggregate_id: aggregate_id,
+      aggregate_id: aggregate_id.clone(),
       aggregate_version: aggregate_version,
       event_name: event_name.into(),
       timestamp: timestamp,
-      metadata: metadata,
+      metadata: metadata.clone(),
       deltas: deltas,
-      aggregate_type: aggregate_type
+      aggregate_type: aggregate_type.clone()
     }
   }
 
@@ -69,9 +83,9 @@ fn new_event(aggregate_id: String,
 
         #[test]
         fn generate_new_event() {
-          let event = test_data();
-          let _event2 = test_data();
-          let _event3 = test_data();
+          let event = create_new_event();
+          let _event2 = create_new_event();
+          let _event3 = create_new_event();
 
           println!("This is the first generated event{:?}", event);
 
@@ -84,13 +98,32 @@ fn new_event(aggregate_id: String,
           assert_eq!(event.aggregate_version, 1);
         }
 
-        // todo:
-        // #[test]
-        // fn generate_event_from_aggregate(){
-        //   let event = Event::from_aggregate(aggregate, new_metadata, deltas, aggregate_type);
-        // }
+        #[test]
+        fn generate_update_event() {
+          let last_event = create_new_event();
+          let changes = 
+            HashMap::from([("full_name".into(),"a new updated name".into())]);
+          let metadata = HashMap::from([("a".into(), "1".into())]);
+          let event_name = "update";
+          let updated_event = last_event.update(changes, metadata, event_name);
 
-        fn test_data() -> Event {
+          assert_eq!(updated_event.aggregate_version, 2u32);
+          assert_eq!(updated_event.deltas["full_name"], "a new updated name");
+          assert_eq!(updated_event.metadata["a"], "1");
+
+          let new_changes = 
+            HashMap::from([("full_name".into(),"a fried fire fox".into())]);
+          
+          let new_metadata = HashMap::from([("a".into(), "2".into())]);
+
+          let updated_event_2 = updated_event.update(new_changes, new_metadata, event_name);
+
+          assert_eq!(updated_event_2.aggregate_version, 3u32);
+          assert_eq!(updated_event_2.deltas["full_name"], "a fried fire fox");
+          assert_eq!(updated_event_2.metadata["a"], "2");
+        }
+
+        fn create_new_event() -> Event {
           let metadata = HashMap::from([
               ("a".into(), "1".into()),
               ("b".into(), "2".into()),
