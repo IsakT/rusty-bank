@@ -6,6 +6,4 @@ mod database;
 fn main() {
     println!("Hello, world! Foo");
     let _schema = database::event_schema::get_schema();
-
-
 }
