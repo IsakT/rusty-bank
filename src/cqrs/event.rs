@@ -1,10 +1,20 @@
+/// Implementation of the Event struct.
+/// 
+/// Handles all the GUID, timestamps, aggregate_versions in the methods.
+/// 
+/// Example:
+/// ```
+///     let metadata = HashMap::from([("a".into(), "1".into())]);
+///     let deltas = HashMap::from([("c".into(), "3".into())]);
+///     let aggregate_type = String::from("AggregateType");
+///     let event = Event::new(metadata, deltas, aggregate_type);
+/// ```
+
 extern crate guid_create;
 use std::collections::HashMap;
 use guid_create::GUID;
 use chrono::prelude::*;
 use rql::prelude::*;
-
-// https://doc.rust-lang.org/reference/types.html
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Event {
@@ -19,6 +29,7 @@ pub struct Event {
 
 impl Event {
   pub fn new(metadata: HashMap<String, String>, deltas: HashMap<String, String>, aggregate_type: String) -> Event {
+    // Generates necessary values
     let utc = Utc::now().to_string();
     let guid = GUID::rand().to_string();
     let aggregate_version = 1;
@@ -30,6 +41,7 @@ impl Event {
   }
 }
 
+/// Constructs the event
 fn new_event(aggregate_id: String,
   aggregate_version: u32,
   event_name: &str,
@@ -61,7 +73,7 @@ fn new_event(aggregate_id: String,
           let _event2 = test_data();
           let _event3 = test_data();
 
-          // println!("This is the first generated event{:?}", event);
+          println!("This is the first generated event{:?}", event);
 
           assert_eq!(event.timestamp.len(), 30);
           assert_eq!(event.aggregate_id.len(), 36);
@@ -72,9 +84,9 @@ fn new_event(aggregate_id: String,
           assert_eq!(event.aggregate_version, 1);
         }
 
+        // todo:
         // #[test]
         // fn generate_event_from_aggregate(){
-
         //   let event = Event::from_aggregate(aggregate, new_metadata, deltas, aggregate_type);
         // }
 
@@ -90,11 +102,10 @@ fn new_event(aggregate_id: String,
               ("c".into(), "3".into()),
           ]);
           let aggregate_type = String::from("AggregateType");
-          let aggregate_type_clone = aggregate_type.clone();
 
           let event = Event::new(metadata, deltas, aggregate_type);
 
-          println!("{}", aggregate_type_clone);
+          println!("{:?}", event);
 
           event
         }
