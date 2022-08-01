@@ -1,14 +1,16 @@
-/// Implementation of the Event struct.
-/// 
-/// Handles all the GUID, timestamps, aggregate_versions in the methods.
-/// 
-/// Example:
-/// ```
-///     let metadata = HashMap::from([("a".into(), "1".into())]);
-///     let deltas = HashMap::from([("c".into(), "3".into())]);
-///     let aggregate_type = String::from("AggregateType");
-///     let event = Event::new(metadata, deltas, aggregate_type);
-/// ```
+/**
+Implementation of the Event struct.
+
+Handles all the GUID, timestamps, aggregate_versions in the methods.
+
+Example:
+```
+    let metadata = HashMap::from([("a".into(), "1".into())]);
+    let deltas = HashMap::from([("c".into(), "3".into())]);
+    let aggregate_type = String::from("AggregateType");
+    let event = Event::new(metadata, deltas, aggregate_type);
+```
+*/
 
 extern crate guid_create;
 use std::collections::HashMap;
@@ -30,26 +32,29 @@ pub struct Event {
 impl Event {
   pub fn new(metadata: HashMap<String, String>, deltas: HashMap<String, String>, aggregate_type: String) -> Event {
     // timestamp as UTC to string
-    let timestamp = Utc::now().to_string();
+    let timestamp: String = Utc::now().to_string();
     // aggregate_id as a GUID
-    let aggregate_id = GUID::rand().to_string();
-    let aggregate_version = 1;
-    let event_name = "new";
+    let aggregate_id:String = GUID::rand().to_string();
+    let aggregate_version: u32 = 1;
+    let event_name: &str = "new";
 
-    let event = new_event(&aggregate_id, aggregate_version, event_name, timestamp, &metadata, deltas, &aggregate_type);
+    let event: Event = new_event(&aggregate_id, aggregate_version, event_name, timestamp, &metadata, deltas, &aggregate_type);
 
     event
   }
-
-  /// 'Update' is a little misleading name, since a completely new event is generated.
+  /// Creates a new event based on the last event of the same aggregate in the event store.
+  /// 'update' might be little misleading name, since a completely new event is generated.
+  /// The name rather suggests an update of the aggregate, not of the event itself.
   pub fn update(&self, changes: HashMap<String, String>, metadata: HashMap<String, String>, event_name: &str) -> Event {
-    let timestamp = Utc::now().to_string();
-    let aggregate_id = &self.aggregate_id;
-    let aggregate_version = &self.aggregate_version + 1;
-    let metadata = metadata;
-    let deltas = changes;
-    let aggregate_type = &self.aggregate_type;
-    let event = new_event(aggregate_id, aggregate_version, event_name, timestamp, &metadata, deltas, aggregate_type);
+    // adds a new timestamp
+    let timestamp: String = Utc::now().to_string();
+    let aggregate_id: &String = &self.aggregate_id;
+    // increments aggregate version, very important!
+    let aggregate_version: u32 = &self.aggregate_version + 1;
+    let metadata: HashMap<String, String> = metadata;
+    let deltas: HashMap<String, String> = changes;
+    let aggregate_type: &String = &self.aggregate_type;
+    let event: Event = new_event(aggregate_id, aggregate_version, event_name, timestamp, &metadata, deltas, aggregate_type);
 
     event
   }
@@ -83,9 +88,9 @@ fn new_event(aggregate_id: &String,
 
         #[test]
         fn generate_new_event() {
-          let event = create_new_event();
-          let _event2 = create_new_event();
-          let _event3 = create_new_event();
+          let event: Event = create_new_event();
+          let _event2: Event = create_new_event();
+          let _event3: Event = create_new_event();
 
           println!("This is the first generated event{:?}", event);
 
@@ -100,23 +105,23 @@ fn new_event(aggregate_id: &String,
 
         #[test]
         fn generate_update_event() {
-          let last_event = create_new_event();
-          let changes = 
+          let last_event: Event = create_new_event();
+          let changes: HashMap<String, String> = 
             HashMap::from([("full_name".into(),"a new updated name".into())]);
-          let metadata = HashMap::from([("a".into(), "1".into())]);
-          let event_name = "update";
-          let updated_event = last_event.update(changes, metadata, event_name);
+          let metadata: HashMap<String, String> = HashMap::from([("a".into(), "1".into())]);
+          let event_name: &str = "update";
+          let updated_event: Event = last_event.update(changes, metadata, event_name);
 
           assert_eq!(updated_event.aggregate_version, 2u32);
           assert_eq!(updated_event.deltas["full_name"], "a new updated name");
           assert_eq!(updated_event.metadata["a"], "1");
 
-          let new_changes = 
+          let new_changes: HashMap<String, String> = 
             HashMap::from([("full_name".into(),"a fried fire fox".into())]);
           
-          let new_metadata = HashMap::from([("a".into(), "2".into())]);
+          let new_metadata: HashMap<String, String> = HashMap::from([("a".into(), "2".into())]);
 
-          let updated_event_2 = updated_event.update(new_changes, new_metadata, event_name);
+          let updated_event_2: Event = updated_event.update(new_changes, new_metadata, event_name);
 
           assert_eq!(updated_event_2.aggregate_version, 3u32);
           assert_eq!(updated_event_2.deltas["full_name"], "a fried fire fox");
@@ -124,19 +129,19 @@ fn new_event(aggregate_id: &String,
         }
 
         fn create_new_event() -> Event {
-          let metadata = HashMap::from([
+          let metadata: HashMap<String, String> = HashMap::from([
               ("a".into(), "1".into()),
               ("b".into(), "2".into()),
               ("c".into(), "3".into()),
           ]);
-          let deltas = HashMap::from([
+          let deltas: HashMap<String, String> = HashMap::from([
               ("a".into(), "1".into()),
               ("b".into(), "2".into()),
               ("c".into(), "3".into()),
           ]);
-          let aggregate_type = String::from("AggregateType");
+          let aggregate_type: String = String::from("AggregateType");
 
-          let event = Event::new(metadata, deltas, aggregate_type);
+          let event: Event = Event::new(metadata, deltas, aggregate_type);
 
           println!("{:?}", event);
 
