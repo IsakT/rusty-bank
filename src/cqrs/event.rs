@@ -18,7 +18,7 @@ use guid_create::GUID;
 use chrono::prelude::*;
 use rql::prelude::*;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Event {
   pub aggregate_id: String,
   pub aggregate_version: u32,

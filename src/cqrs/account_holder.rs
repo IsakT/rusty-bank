@@ -29,17 +29,28 @@ Generate event for updating an existing AccountHolder aggregate:
 */
 
 
-// use rql::prelude::*;
+use rql::prelude::*;
 // use rql::mashup;
 use crate::cqrs::event::*;
 use std::collections::HashMap;
 use crate::database::event_schema::*;
-use rql::repr::Representation::HumanReadable;
+// use rql::repr::Representation::HumanReadable;
 
 static AGGREGATE_TYPE: &str = "AccountHolder";
 
+// todo: this struct should probably be moved to Projections
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AccountHolder {
+  pub aggregate_id: String,
+  pub full_name: String, 
+  pub social_security_number: String, 
+  pub date_of_birth: String, 
+  pub phone_number: String, 
+  pub home_address: String,
+}
+
 pub fn create_new_account_holder(
-        name: &str,
+        full_name: &str,
         social_security_number: &str,
         date_of_birth: &str,
         phone_number: &str,
@@ -47,7 +58,7 @@ pub fn create_new_account_holder(
         ) -> Event {
     let metadata = HashMap::from([]);
     let deltas = HashMap::from([
-        ("full_name".into(), name.into()),
+        ("full_name".into(), full_name.into()),
         ("social_security_number".into(), social_security_number.into()),
         ("date_of_birth".into(), date_of_birth.into()),
         ("phone_number".into(), phone_number.into()),
@@ -60,23 +71,51 @@ pub fn create_new_account_holder(
     event
 }
 
-// todo: implement Aggregate struct
-pub fn update_account_holder(aggregate: Aggregate, changes: HashMap<String, String>) -> Event {
-    // access event db
-    let schema = get_schema();
-    let table = schema.event();
+pub fn update_account_holder(aggregate: AccountHolder, changes: HashMap<String, String>) -> Option<Event> {
+    let latest_event = get_event_by_aggregate_id(aggregate.aggregate_id);
 
-    // fetch latest aggregate event
+    match latest_event {
+        Some(_) => {
+            let event_name = "update_account_holder_info";
+            let metadata = HashMap::new();
+        
+            // Call method 'update' on latest event, generating a brand new and "updated" event based on the one passed in.
+            let new_event = latest_event.unwrap().update(changes, metadata, event_name);
+            return Some(new_event)
+        },
+        None => {
+            return None
+        }
+    }
 
-    // call method 'update' on latest event
-    let new_event = latest_event.update(changes, metadata, event_name);
-
-    new_event
 }
-// for x in my_map.keys() {
-//     println!("{}", x);
-//     println!("{}", my_map.get(x).unwrap());
-// }
+
+fn get_event_by_aggregate_id(aggregate_id: String) -> Option<Event> {
+    // access event db
+    let schema: EventSchema = get_schema();
+    let event_table = schema.event();
+
+    let mut events = Vec::new();
+
+    // fetch latest events by aggregate_id
+    for event in event_table
+            .wher(|event| event.aggregate_id == aggregate_id )
+            .select(|event| event.clone() ) {
+        events.push(event.data);
+    }
+
+    println!("events fetched from db: {:?}", &events);
+    println!("latest event: {:?}", events.clone().into_iter().nth(0));
+
+    if events.len() == 0 {
+        println!("events from db was an empty list");
+        None
+    } else {
+        println!("events from db was not an empty list");
+        let latest = events.clone().into_iter().nth(0).unwrap().clone();
+        Some(latest)
+    }
+}
 
 #[cfg(test)]
     mod tests {
@@ -109,17 +148,26 @@ pub fn update_account_holder(aggregate: Aggregate, changes: HashMap<String, Stri
             assert_eq!(event.deltas.get("home_address"), Some(&String::from(home_address)));
         }
 
+        #[test]
         fn test_update_account_holder(){
-            let db = setup();
-            let table = db.event();
-
-            let aggregate_id = 
-            let aggregate_id = String::from(aggregate_id);
+            let account_holder = get_account_holder();
 
             let changes = HashMap::from([
                 ("full_name".into(), "Foobar Svensson".into())
             ]);
-            let updated_event = update_account_holder(aggregate_id, changes);
+            let updated_event = update_account_holder(account_holder, changes);
+
+            println!("Update AccountHolder, event: {:?}", updated_event.unwrap());
+        }
+
+        #[test]
+        fn test_get_latest_event(){
+            let aggregate_id = get_random_aggregate_id_from_db();
+
+            let latest_event = get_event_by_aggregate_id(aggregate_id);
+
+            // sometimes this panics, just run test again until it works
+            assert_eq!(latest_event.unwrap().event_name, "new"); 
         }
 
         fn test_delete_account_holder(){
@@ -152,6 +200,30 @@ pub fn update_account_holder(aggregate: Aggregate, changes: HashMap<String, Stri
             db.event_mut().insert(event5);
 
             db
+        }
+
+        fn get_random_aggregate_id_from_db() -> String {
+            let db = setup();
+            let table = db.event();
+
+            let events: Vec<_> =
+                table
+                .select(|event| event.aggregate_id.clone() )
+                .collect();
+
+            events.into_iter().nth(0).unwrap()
+        }
+
+        fn get_account_holder() -> AccountHolder {
+            let aggregate_id = get_random_aggregate_id_from_db();
+            AccountHolder{
+                aggregate_id: aggregate_id,
+                full_name: "Isak Törnros".into(),
+                social_security_number: "199306257255".into(),
+                date_of_birth: "199306257255".into(),
+                phone_number: "0763154177".into(),
+                home_address: "Nöbbelövs Torg 37, 22652 LUND".into(),
+            }
         }
 
         fn create_new_event() -> Event {
