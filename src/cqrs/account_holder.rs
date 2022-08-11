@@ -23,7 +23,27 @@ Generate event for a new AccountHolder:
 
 Generate event for updating an existing AccountHolder aggregate:
 ```
+    let account_holder_aggregate = AccountHolder{
+                aggregate_id: aggregate_id,
+                full_name: "Isak Törnros".into(),
+                social_security_number: "199306257255".into(),
+                date_of_birth: "199306257255".into(),
+                phone_number: "0763154177".into(),
+                home_address: "Nöbbelövs Torg 37, 22652 LUND".into(),
+            };
+    let changes = HashMap::from([("full_name".into(), "Emil Törnros")]);
 
+    let new_event = update_account_holder(account_holder_aggregate, changes);
+
+    // this returns:
+    //   Event { 
+    //       aggregate_id: "C3FFCB03-CDF6-0728-0974-B74DF906A5E6", 
+    //       aggregate_version: 2, 
+    //       event_name: "update_account_holder_info", 
+    //       timestamp: "2022-08-11 08:18:53.001244 UTC", 
+    //       metadata: {},
+    //       deltas: {"full_name": "Emil Törnros"}, 
+    //       aggregate_type: "AccountHolder" }
 
 ```
 */
@@ -33,22 +53,25 @@ use rql::prelude::*;
 // use rql::mashup;
 use crate::cqrs::event::*;
 use std::collections::HashMap;
-use crate::database::event_schema::*;
+use crate::database;
+use crate::database::event_schema::EventSchema;
 // use rql::repr::Representation::HumanReadable;
 
+#[allow(dead_code)]
 static AGGREGATE_TYPE: &str = "AccountHolder";
 
 // todo: this struct should probably be moved to Projections
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AccountHolder {
   pub aggregate_id: String,
-  pub full_name: String, 
+  pub full_name: String,
   pub social_security_number: String, 
   pub date_of_birth: String, 
   pub phone_number: String, 
   pub home_address: String,
 }
 
+#[allow(dead_code)]
 pub fn create_new_account_holder(
         full_name: &str,
         social_security_number: &str,
@@ -71,6 +94,7 @@ pub fn create_new_account_holder(
     event
 }
 
+#[allow(dead_code)]
 pub fn update_account_holder(aggregate: AccountHolder, changes: HashMap<String, String>) -> Option<Event> {
     let latest_event = get_event_by_aggregate_id(aggregate.aggregate_id);
 
@@ -92,7 +116,7 @@ pub fn update_account_holder(aggregate: AccountHolder, changes: HashMap<String, 
 
 fn get_event_by_aggregate_id(aggregate_id: String) -> Option<Event> {
     // access event db
-    let schema: EventSchema = get_schema();
+    let schema: EventSchema = database::event_schema::get_schema();
     let event_table = schema.event();
 
     let mut events = Vec::new();
@@ -153,7 +177,7 @@ fn get_event_by_aggregate_id(aggregate_id: String) -> Option<Event> {
             let account_holder = get_account_holder();
 
             let changes = HashMap::from([
-                ("full_name".into(), "Foobar Svensson".into())
+                ("full_name".into(), "Emil Törnros".into())
             ]);
             let updated_event = update_account_holder(account_holder, changes);
 
