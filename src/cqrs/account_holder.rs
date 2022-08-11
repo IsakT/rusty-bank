@@ -50,26 +50,14 @@ Generate event for updating an existing AccountHolder aggregate:
 
 
 use rql::prelude::*;
-// use rql::mashup;
 use crate::cqrs::event::*;
 use std::collections::HashMap;
 use crate::database;
 use crate::database::event_schema::EventSchema;
-// use rql::repr::Representation::HumanReadable;
+use crate::projections::account_holder::AccountHolder;
 
 #[allow(dead_code)]
 static AGGREGATE_TYPE: &str = "AccountHolder";
-
-// todo: this struct should probably be moved to Projections
-#[derive(Serialize, Deserialize, Debug)]
-pub struct AccountHolder {
-  pub aggregate_id: String,
-  pub full_name: String,
-  pub social_security_number: String, 
-  pub date_of_birth: String, 
-  pub phone_number: String, 
-  pub home_address: String,
-}
 
 #[allow(dead_code)]
 pub fn create_new_account_holder(
