@@ -1,9 +1,37 @@
 ---
-248478bf-c5d1-4078-a1be-9f8a1065e61d:
-  aggregate_id: 7BBC509B-D091-5DB1-ACC5-46722B13B271
+8586ca26-87e1-4e60-9ec2-a4aa37a27bf8:
+  aggregate_id: 55FD3905-843D-2C2A-6540-CD036AC3AB38
   aggregate_version: 1
   event_name: new
-  timestamp: "2022-08-10 15:44:21.717601 UTC"
+  timestamp: "2022-08-11 14:18:33.190383 UTC"
+  metadata:
+    c: "3"
+    b: "2"
+    a: "1"
+  deltas:
+    a: "1"
+    b: "2"
+    c: "3"
+  aggregate_type: AccountHolder
+835f58dd-66ae-4d6d-92b9-ffae8e25be9f:
+  aggregate_id: D4921C2F-3C63-61DB-0B5C-45EFAEFEFC0A
+  aggregate_version: 1
+  event_name: new
+  timestamp: "2022-08-11 14:18:33.190571 UTC"
+  metadata:
+    a: "1"
+    b: "2"
+    c: "3"
+  deltas:
+    a: "1"
+    b: "2"
+    c: "3"
+  aggregate_type: Transaction
+f8ec6d04-5271-4483-b2e8-dbb9e48fd353:
+  aggregate_id: 31B6F68F-CC3F-46E0-63F0-1A7B9F510EF2
+  aggregate_version: 1
+  event_name: new
+  timestamp: "2022-08-11 14:18:33.190421 UTC"
   metadata:
     b: "2"
     a: "1"
@@ -12,60 +40,74 @@
     a: "1"
     b: "2"
     c: "3"
-  aggregate_type: AggregateType
-7c3fdc02-eaab-4e88-92c4-1d876cecdbb5:
-  aggregate_id: FD3348EB-2E74-25EE-27D1-1E5678BA4C5F
+  aggregate_type: Message
+eb730321-abc8-4361-9582-1390d70c961c:
+  aggregate_id: 172EE6A3-2D26-0DC3-DE2E-954C37691F5E
   aggregate_version: 1
   event_name: new
-  timestamp: "2022-08-10 15:44:21.717713 UTC"
+  timestamp: "2022-08-11 14:18:33.190456 UTC"
+  metadata:
+    c: "3"
+    b: "2"
+    a: "1"
+  deltas:
+    a: "1"
+    c: "3"
+    b: "2"
+  aggregate_type: Message
+e4e9ff78-77f6-41d2-a816-a2f1875ac6c1:
+  aggregate_id: D86F8857-2E67-58CD-E8C9-CFE6C67891FE
+  aggregate_version: 1
+  event_name: new
+  timestamp: "2022-08-11 14:18:33.190260 UTC"
+  metadata:
+    c: "3"
+    b: "2"
+    a: "1"
+  deltas:
+    b: "2"
+    a: "1"
+    c: "3"
+  aggregate_type: AccountHolder
+0f4a1259-573f-425d-9b40-501eca7b8f9e:
+  aggregate_id: 894983E3-15BB-C219-3EF4-4686F9322982
+  aggregate_version: 1
+  event_name: new
+  timestamp: "2022-08-11 14:18:33.190492 UTC"
   metadata:
     b: "2"
     c: "3"
     a: "1"
   deltas:
-    b: "2"
     c: "3"
+    b: "2"
     a: "1"
-  aggregate_type: AggregateType
-8a8fcd11-1934-48b5-8f1c-4c7b4f620a90:
-  aggregate_id: 6F5DAC41-35AE-8498-8F38-B25508D10266
+  aggregate_type: Transaction
+fe5020ea-385d-4003-82d0-8c702d6ef47c:
+  aggregate_id: 3FAC7F89-1D40-096F-E9E7-FF90D3E8304E
   aggregate_version: 1
   event_name: new
-  timestamp: "2022-08-10 15:44:21.717773 UTC"
+  timestamp: "2022-08-11 14:18:33.190606 UTC"
   metadata:
-    b: "2"
     a: "1"
     c: "3"
-  deltas:
-    a: "1"
-    c: "3"
-    b: "2"
-  aggregate_type: AggregateType
-14e3692a-5292-428f-9a5d-439e2e7b038c:
-  aggregate_id: A22FD379-8EAF-D940-3A8F-1B15894803A2
-  aggregate_version: 1
-  event_name: new
-  timestamp: "2022-08-10 15:44:21.717806 UTC"
-  metadata:
-    c: "3"
-    a: "1"
     b: "2"
   deltas:
+    b: "2"
     c: "3"
     a: "1"
-    b: "2"
-  aggregate_type: AggregateType
-009a5159-2970-435a-83cd-ffa109a0e536:
-  aggregate_id: A8E9DA0D-5521-12AE-C363-73752B4FE9F8
+  aggregate_type: Session
+4499446b-9ff6-4ec9-842c-20a4fa438895:
+  aggregate_id: FC4A019E-875D-4503-FF1D-D4189F268784
   aggregate_version: 1
   event_name: new
-  timestamp: "2022-08-10 15:44:21.717744 UTC"
+  timestamp: "2022-08-11 14:18:33.190641 UTC"
   metadata:
     a: "1"
     b: "2"
     c: "3"
   deltas:
-    a: "1"
-    c: "3"
     b: "2"
-  aggregate_type: AggregateType
+    c: "3"
+    a: "1"
+  aggregate_type: Session

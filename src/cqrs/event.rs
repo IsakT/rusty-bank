@@ -87,12 +87,11 @@ fn new_event(aggregate_id: &String,
         use super::*;
 
         #[test]
+        #[serial_test::serial]
         fn generate_new_event() {
           let event: Event = create_new_event();
           let _event2: Event = create_new_event();
           let _event3: Event = create_new_event();
-
-          println!("This is the first generated event{:?}", event);
 
           assert_eq!(event.timestamp.len(), 30);
           assert_eq!(event.aggregate_id.len(), 36);
@@ -104,6 +103,7 @@ fn new_event(aggregate_id: &String,
         }
 
         #[test]
+        #[serial_test::serial]
         fn generate_update_event() {
           let last_event: Event = create_new_event();
           let changes: HashMap<String, String> = 

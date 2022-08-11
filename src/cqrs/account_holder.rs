@@ -83,12 +83,12 @@ pub fn create_new_account_holder(
 }
 
 #[allow(dead_code)]
-pub fn update_account_holder(aggregate: AccountHolder, changes: HashMap<String, String>) -> Option<Event> {
-    let latest_event = get_event_by_aggregate_id(aggregate.aggregate_id);
+pub fn update_account_holder(aggregate_id: String, changes: HashMap<String, String>, event_name: &str) -> Option<Event> {
+    println!("update account holder aggregate_id: {}", aggregate_id);
+    let latest_event = get_latest_event_by_aggregate_id(aggregate_id);
 
     match latest_event {
         Some(_) => {
-            let event_name = "update_account_holder_info";
             let metadata = HashMap::new();
         
             // Call method 'update' on latest event, generating a brand new and "updated" event based on the one passed in.
@@ -101,39 +101,83 @@ pub fn update_account_holder(aggregate: AccountHolder, changes: HashMap<String, 
     }
 
 }
+#[allow(dead_code)]
+pub fn update_account_holder_info(aggregate: AccountHolder, changes: HashMap<String, String>) -> Option<Event> {
+    let event_name = "update_account_holder_info";
+    update_account_holder(aggregate.aggregate_id, changes, event_name)
+}
+#[allow(dead_code)]
+pub fn update_account_holder_info_by_id(aggregate_id: String, changes: HashMap<String, String>) -> Option<Event> {
+    let event_name = "update_account_holder_info";
+    update_account_holder(aggregate_id, changes, event_name)
+}
+#[allow(dead_code)]
+pub fn delete_account_holder(aggregate: AccountHolder) -> Option<Event> {
+    let changes = HashMap::from([("deltas".into(), "deleted: true".into())]);
+    let event_name = "delete_account_holder";
+    update_account_holder(aggregate.aggregate_id, changes, event_name)
+}
+#[allow(dead_code)]
+pub fn delete_account_holder_by_id(aggregate_id: String) -> Option<Event> {
+    let changes = HashMap::from([("deltas".into(), "deleted: true".into())]);
+    let event_name = "delete_account_holder";
+    update_account_holder(aggregate_id, changes, event_name)
+}
 
-fn get_event_by_aggregate_id(aggregate_id: String) -> Option<Event> {
-    // access event db
-    let schema: EventSchema = database::event_schema::get_schema();
-    let event_table = schema.event();
-
-    let mut events = Vec::new();
-
-    // fetch latest events by aggregate_id
-    for event in event_table
-            .wher(|event| event.aggregate_id == aggregate_id )
-            .select(|event| event.clone() ) {
-        events.push(event.data);
-    }
+fn get_latest_event_by_aggregate_id(aggregate_id: String) -> Option<Event> {
+    let events = get_events_by_id(aggregate_id, AGGREGATE_TYPE);
 
     println!("events fetched from db: {:?}", &events);
     println!("latest event: {:?}", events.clone().into_iter().nth(0));
 
-    if events.len() == 0 {
-        println!("events from db was an empty list");
+    let latest = 
+        if events.len() == 0 {
+            println!("events from db was an empty list");
+            return None
+        } else {
+            println!("events from db was not an empty list");
+            Some(events[0].clone())
+        };
+
+    // check if latest event is already a delete-type event. In that case, return None.
+    if latest.clone().unwrap().event_name == "delete_account_holder" {
         None
     } else {
-        println!("events from db was not an empty list");
-        let latest = events.clone().into_iter().nth(0).unwrap().clone();
-        Some(latest)
+        latest
     }
+    
 }
 
+fn get_events_by_id(aggregate_id: String, aggregate_type: &str) -> Vec<Event> {
+    let schema: EventSchema = database::event_schema::get_schema();
+    let event_table = schema.event();
+
+    let mut events = Vec::new();
+    for event in event_table
+            .wher(|event| 
+                event.aggregate_id == aggregate_id 
+                && event.aggregate_type == aggregate_type
+            )
+            .select(|event| event ) {
+        events.push(event.data.clone());
+    }
+
+    events
+}
+
+// cargo test -- --nocapture
 #[cfg(test)]
     mod tests {
         use super::*;
 
+        fn setup() -> EventSchema{
+            database::ruql::setup()
+        }
+
+        // using serial testing so that db is populated consistently, to avoid unexpected side effects
+        // when the tests fire off in random order
         #[test]
+        #[serial_test::serial]
         fn test_create_new_account_holder() {
             let full_name = "Isak Törnros".into();
             let social_security_number = "19930625-7255".into();
@@ -161,65 +205,56 @@ fn get_event_by_aggregate_id(aggregate_id: String) -> Option<Event> {
         }
 
         #[test]
+        #[serial_test::serial]
         fn test_update_account_holder(){
+            setup();
             let account_holder = get_account_holder();
 
             let changes = HashMap::from([
                 ("full_name".into(), "Emil Törnros".into())
             ]);
-            let updated_event = update_account_holder(account_holder, changes);
+            let updated_event = update_account_holder_info(account_holder, changes);
 
-            println!("Update AccountHolder, event: {:?}", updated_event.unwrap());
+            let updated_event_copy = updated_event.clone().unwrap();
+
+            println!("Update AccountHolder, event: {:?}", updated_event_copy);
+
+            assert_eq!(updated_event_copy.event_name, "update_account_holder_info");
+            assert_eq!(updated_event_copy.deltas.get("full_name").unwrap(), "Emil Törnros");
         }
 
         #[test]
+        #[serial_test::serial]
         fn test_get_latest_event(){
-            let aggregate_id = get_random_aggregate_id_from_db();
+            let aggregate_id = get_random_accountholder_id_from_db();
 
-            let latest_event = get_event_by_aggregate_id(aggregate_id);
+            let latest_event = get_latest_event_by_aggregate_id(aggregate_id);
 
-            // sometimes this panics, just run test again until it works
             assert_eq!(latest_event.unwrap().event_name, "new"); 
         }
 
+        #[test]
+        #[serial_test::serial]
         fn test_delete_account_holder(){
+            let account_holder = get_account_holder();
 
+            let delete_event_1 = delete_account_holder_by_id(account_holder.aggregate_id.clone());
+            let delete_event_2 = delete_account_holder(account_holder);
+
+            // println!("delete_event_1: {:?}", delete_event_1);
+            // println!("delete_event_2: {:?}", delete_event_2);
+
+            assert_eq!(delete_event_1.unwrap().event_name, "delete_account_holder");
+            assert_eq!(delete_event_2.unwrap().event_name, "delete_account_holder");
         }
 
-        fn test_get_account_holder(){
-
-        }
-
-        fn setup() -> EventSchema{
-            let db = EventSchema::new("test_database_example", HumanReadable).unwrap();
-
-            // delete all events
-            db.event_mut().delete_where(|_| true);
-
-            let event = create_new_event();
-            let event2 = create_new_event();
-            let event3 = create_new_event();
-            let event4 = create_new_event();
-            let event5 = create_new_event();
-            
-
-            // todo generate events from event.rs and insert
-            // insert events
-            db.event_mut().insert(event);
-            db.event_mut().insert(event2);
-            db.event_mut().insert(event3);
-            db.event_mut().insert(event4);
-            db.event_mut().insert(event5);
-
-            db
-        }
-
-        fn get_random_aggregate_id_from_db() -> String {
-            let db = setup();
+        fn get_random_accountholder_id_from_db() -> String {
+            let db = database::event_schema::get_schema();
             let table = db.event();
 
             let events: Vec<_> =
                 table
+                .wher(|event| event.aggregate_type == AGGREGATE_TYPE)
                 .select(|event| event.aggregate_id.clone() )
                 .collect();
 
@@ -227,7 +262,7 @@ fn get_event_by_aggregate_id(aggregate_id: String) -> Option<Event> {
         }
 
         fn get_account_holder() -> AccountHolder {
-            let aggregate_id = get_random_aggregate_id_from_db();
+            let aggregate_id = get_random_accountholder_id_from_db();
             AccountHolder{
                 aggregate_id: aggregate_id,
                 full_name: "Isak Törnros".into(),
@@ -237,22 +272,4 @@ fn get_event_by_aggregate_id(aggregate_id: String) -> Option<Event> {
                 home_address: "Nöbbelövs Torg 37, 22652 LUND".into(),
             }
         }
-
-        fn create_new_event() -> Event {
-            let metadata = HashMap::from([
-                ("a".into(), "1".into()),
-                ("b".into(), "2".into()),
-                ("c".into(), "3".into()),
-            ]);
-            let deltas = HashMap::from([
-                ("a".into(), "1".into()),
-                ("b".into(), "2".into()),
-                ("c".into(), "3".into()),
-            ]);
-            let aggregate_type = String::from("AggregateType");
-  
-            let event = Event::new(metadata, deltas, aggregate_type);
-  
-            event
-          }
     }
