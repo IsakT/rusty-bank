@@ -125,11 +125,12 @@ pub fn delete_account_holder_by_id(aggregate_id: String) -> Option<Event> {
 }
 
 fn get_latest_event_by_aggregate_id(aggregate_id: String) -> Option<Event> {
-    let events = get_events_by_id(aggregate_id, AGGREGATE_TYPE);
+    let events = get_events_by_id_and_type(aggregate_id, AGGREGATE_TYPE);
 
     println!("events fetched from db: {:?}", &events);
     println!("latest event: {:?}", events.clone().into_iter().nth(0));
 
+    // check if any events were found, if yes, then take first in vec, else early-return a None.
     let latest = 
         if events.len() == 0 {
             println!("events from db was an empty list");
@@ -145,10 +146,9 @@ fn get_latest_event_by_aggregate_id(aggregate_id: String) -> Option<Event> {
     } else {
         latest
     }
-    
 }
 
-fn get_events_by_id(aggregate_id: String, aggregate_type: &str) -> Vec<Event> {
+fn get_events_by_id_and_type(aggregate_id: String, aggregate_type: &str) -> Vec<Event> {
     let schema: EventSchema = database::event_schema::get_schema();
     let event_table = schema.event();
 
