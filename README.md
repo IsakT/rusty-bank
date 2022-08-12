@@ -1,4 +1,4 @@
-# Rusty-bank
+# rusty-bank
 A "hello world" style kind of app for me to learn the programming language Rust.
 
 [WORK IN PROGRESS]
